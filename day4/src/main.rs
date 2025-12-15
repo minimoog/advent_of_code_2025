@@ -36,19 +36,11 @@ fn main() -> std::io::Result<()> {
         for x in 0..COLS {
             if grid[(x, y)] == '.' { continue; }
 
-            let n = grid.neighbors8(x, y);
+            let counter = grid.neighbors8(x, y).into_iter()
+                .filter(|&x| *x.2 == '@')
+                .count();
 
-            let mut ccounter = 0;
-
-            for (_, _, c) in n {
-                if *c == '@' { ccounter += 1; }
-            }
-
-            if ccounter < 4 {
-                count1 += 1;
-
-                println!("{} {}", x, y);
-            }
+            if counter < 4 { count1 += 1; }
         }
 
     }
