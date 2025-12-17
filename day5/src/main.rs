@@ -1,6 +1,7 @@
 use std::{fs::File, io::{self, BufRead}};
+use std::cmp::max;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 struct Range {
     lower: u64,
     higher: u64,
@@ -48,9 +49,9 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    ranges.iter().for_each(|r| println!("{} - {}", r.lower, r.higher));
+    //ranges.iter().for_each(|r| println!("{} - {}", r.lower, r.higher));
 
-    ids.iter().for_each(|r| println!("{}", r));
+    //ids.iter().for_each(|r| println!("{}", r));
 
     for id in ids {
         let c = ranges.iter().filter(|r| r.in_range(id)).count();
@@ -61,6 +62,35 @@ fn main() -> std::io::Result<()> {
     }
 
     println!("{}", fresh_counter);
+    println!("================");
+
+    //part 2
+    let mut merged_intervals: Vec<Range> = Vec::new();
+
+    //sort ranges
+    ranges.sort_by_key(|r| r.lower);
+
+    //add first one
+    merged_intervals.push(ranges[0]);
+
+    
+    for i in 1..ranges.len() {
+        
+        let last = merged_intervals.last().unwrap();
+
+        if ranges[i].lower <= last.higher {
+            //overlap
+            merged_intervals.last_mut().unwrap().higher = max(ranges[i].higher, last.higher);
+
+        } else {
+            //no overlap
+            merged_intervals.push(ranges[i]);
+        }
+    }
+
+    let part2: u64 = merged_intervals.iter().map(|r| r.higher - r.lower + 1).sum();
+
+    println!("{}", part2);
 
     Ok(())
 }
