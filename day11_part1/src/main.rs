@@ -39,36 +39,56 @@ impl Tree {
         }
     }
 
-    fn count_paths_required(&self, current: &str, to: &str, required: &[&str], visited_required: Vec<bool>) -> usize {
+    fn count_paths_with_required(
+        &self, 
+        current: &str, 
+        target: &str,
+        required: &[&str],
+        visited_mask: u64,
+        memo: &mut HashMap<(String, u64), usize>,
+    ) -> usize {
+        // Check memo first
+        let key = (current.to_string(), visited_mask);
+        if let Some(&cached) = memo.get(&key) {
+            return cached;
+        }
+        
+        let mut mask = visited_mask;
+        
         // Mark current node if it's required
-        let mut visited = visited_required;
-
         for (i, &req) in required.iter().enumerate() {
             if current == req {
-                visited[i] = true;
+                mask |= 1 << i;
             }
         }
         
         // If we reached target, check if all required nodes were visited
-        if current == to {
-            return if visited.iter().all(|&v| v) { 1 } else { 0 };
+        if current == target {
+            let all_required_mask = (1 << required.len()) - 1;
+            let result = if mask == all_required_mask { 1 } else { 0 };
+            memo.insert(key, result);
+            return result;
         }
         
         // Continue DFS
-        if let Some(neighbors) = self.graph.get(current) {
+        let result = if let Some(neighbors) = self.graph.get(current) {
             neighbors.iter()
                 .map(|neighbor| {
-                    self.count_paths_required(
+                    self.count_paths_with_required(
                         neighbor, 
-                        to, 
+                        target, 
                         required, 
-                        visited.clone()
+                        mask,
+                        memo
                     )
                 })
                 .sum()
         } else {
             0
-        }
+        };
+        
+        memo.insert(key, result);
+        result
     }
 }
 
@@ -79,13 +99,14 @@ fn main() {
     //let count = graph.count_paths("you", "out");
 
     let required = vec!["dac", "fft"];
-    let initial_visited = vec![false; required.len()];
+    let mut memo = HashMap::new();
     
-    let count2 = graph.count_paths_required(
+    let count2 = graph.count_paths_with_required(
         "svr", 
         "out", 
         &required, 
-        initial_visited
+        0,
+        &mut memo
     );
 
     println!("path count: {}", count2);
